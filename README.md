@@ -4,6 +4,8 @@ Page: https://robo-punks-six.vercel.app/
 
 Contract: https://goerli.etherscan.io/address/0xc23a32c1A45e501bD0017dec0c87f9e68982A9D3#code
 
+(only functional in the goerli network)
+
 ## Foundry
 
 **Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
