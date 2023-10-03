@@ -1,50 +1,37 @@
 // SPDX-License-Identifier: MIT
+
 /*
-
-7,777 cc0 frENS, shilling nonsense, yelling
-at Nick. eth, and praying for SIWE.
-
-Twitter: https://twitter.com/frENSNFT_
-Website: https://frens.studio
-Discord: https://discord.gg/mXjrqK9b
-
-================Easter Eggs================
-
-Winner for each riddle will get a 0.25 eth prize.
-To claim your prize, DM us on Twitter (frENSNFT_)
-with the hash transaction and answer.
+================Easter Egg================
 
 Riddle 1:
-I'm a breeze in summer, refreshing and fine,
-Not hot, not warm, but pleasantly right.
-In emotions, I might make you frown,
-In a city, you'll find me in the heart of the town.
+There are many robots in this world, so they must share rooms, 
+at night they group together in the center of the room and go into sleep mode, 
+it helps them to recharge. There are two robots in front of another pair of robots, 
+there are two robots behind another pair of robots, 
+there are two robots next to another two robots. 
 
-Who am I?
+How many robots share the room?
 
-Riddle 2:
-I'm not this, I'm not that, a category I'm not.
-When one is chosen, I'm what they've got.
-On paper's stage, I take my form,
-A history of choices, norms to reform.
-
-Who am I?
 
 */
-pragma solidity ^0.8.18;
+pragma solidity ^0.8.19;
 
 import "openzeppelin-contracts/contracts/token/ERC721/ERC721.sol";
 import "openzeppelin-contracts/contracts/utils/Counters.sol";
 import "openzeppelin-contracts/contracts/access/Ownable.sol";
 import "openzeppelin-contracts/contracts/utils/cryptography/MerkleProof.sol";
 
+/**
+ * @title RoboPunksNFT
+ * @author Neura
+ * @notice Robots entered into the NFTs...
+ *         If you can decipher the riddle, feel free to enter your answer in answerRiddle1(), you will get a reward ;)
+*/
 contract RoboPunksNFT is ERC721, Ownable {
     using Strings for uint256;
     using Counters for Counters.Counter;
 
     Counters.Counter private supply;
-
-    address public snapshotContract;
 
     string internal uri;
 
@@ -100,12 +87,20 @@ contract RoboPunksNFT is ERC721, Ownable {
         _;
     }
 
-    function totalSupply() public view returns (uint256) {
+    /** 
+     * @notice Function that displays the number of nfts minted.
+     * @dev Use "Counter" from OZ to get the last mined id.
+    */
+    function totalSupply() external view returns (uint256) {
         return supply.current();
     }
 
+    /** 
+     * @notice Function used to mint nfts.
+     * @param _mintAmount the amount of nfts you want to mint 
+    */
     function mint(uint256 _mintAmount)
-    public
+    external
     payable
     mintCompliance(_mintAmount)
     {
@@ -116,8 +111,13 @@ contract RoboPunksNFT is ERC721, Ownable {
         _mintLoop(msg.sender, _mintAmount);
     }
 
+    /** 
+     * @notice Function used to mint nfts for existing users in whitelist.
+     * @param _mintAmount the amount of nfts you want to mint.
+     * @param _merkleProof the signarure for the whitelist.
+    */
     function whitelistMint(uint256 _mintAmount, bytes32[] calldata _merkleProof)
-    public
+    external
     payable
     mintCompliance(_mintAmount)
     {
@@ -131,7 +131,7 @@ contract RoboPunksNFT is ERC721, Ownable {
         if (_mintAmount > 1) {
             require(msg.value >= (cost * (_mintAmount - 1)), "Insufficient funds!");
         }
-        bytes32 leaf = keccak256(bytes.concat(keccak256(abi.encode(claimer))));
+        bytes32 leaf = keccak256(abi.encode(msg.sender));
         require(
             MerkleProof.verify(_merkleProof, merkleRoot, leaf),
             "Invalid proof"
@@ -141,16 +141,25 @@ contract RoboPunksNFT is ERC721, Ownable {
         _mintLoop(claimer, _mintAmount);
     }
 
+    /** 
+     * @notice Privileged function in which the owner can mint nfts to any user.
+     * @param _mintAmount the amount of nfts you want to mint.
+     * @param _receiver the address of the user that the owner wants to receive nfts.
+    */
     function mintForAddress(uint256 _mintAmount, address _receiver)
-    public
+    external
     mintCompliance(_mintAmount)
     onlyOwner
     {
         _mintLoop(_receiver, _mintAmount);
     }
 
+    /** 
+     * @notice Returns the amounts and the ids of nfts that have the specified address.
+     * @param _owner the address of any user that you indicates.
+    */
     function walletOfOwner(address _owner)
-    public
+    external
     view
     returns (uint256[] memory)
     {
@@ -176,6 +185,10 @@ contract RoboPunksNFT is ERC721, Ownable {
         return ownedTokenIds;
     }
 
+    /** 
+     * @notice Return information about your minted nft.
+     * @param _tokenId the id of your minted nft.
+    */
     function tokenURI(uint256 _tokenId)
     public
     view
@@ -205,56 +218,99 @@ contract RoboPunksNFT is ERC721, Ownable {
         : "";
     }
 
-    function setRevealed(bool _state) public onlyOwner {
+    /** 
+     * @notice Privileged function in which the owner can revele the information of nfts.
+     * @param _state the state to which the owner wants to change.
+    */
+    function setRevealed(bool _state) external onlyOwner {
         revealed = _state;
     }
 
-    function setCost(uint256 _cost) public onlyOwner {
+    /** 
+     * @notice Privileged function in which the owner can set the cost of one nft.
+     * @param _cost the cost to which the owner wants to change.
+    */
+    function setCost(uint256 _cost) external onlyOwner {
         cost = _cost;
     }
 
+    /** 
+     * @notice Privileged function in which the owner can set the max mint amount per transaction.
+     * @param _maxMintAmountPerTx the max amount mint per transaction to which the owner wants to change.
+    */
     function setMaxMintAmountPerTx(uint256 _maxMintAmountPerTx)
-    public
+    external
     onlyOwner
     {
         maxMintAmountPerTx = _maxMintAmountPerTx;
     }
 
+    /** 
+     * @notice Privileged function in which the owner can set the hidden metadata uri.
+     * @param _hiddenMetadataUri the information for the hidden metadata uri.
+    */
     function setHiddenMetadataUri(string memory _hiddenMetadataUri)
-    public
+    external
     onlyOwner
     {
         hiddenMetadataUri = _hiddenMetadataUri;
     }
 
-    function setUri(string memory _uri) public onlyOwner {
+    /** 
+     * @notice Privileged function in which the owner can set the uri for nfts.
+     * @param _uri the url of the uri.
+    */
+    function setUri(string memory _uri) external onlyOwner {
         uri = _uri;
     }
 
-    function setUriSuffix(string memory _uriSuffix) public onlyOwner {
+    /** 
+     * @notice Privileged function in which the owner can set the UriSuffix.
+     * @param _uriSuffix the uriSuffix for the uri.
+    */
+    function setUriSuffix(string memory _uriSuffix) external onlyOwner {
         uriSuffix = _uriSuffix;
     }
 
-    function setPaused(bool _state) public onlyOwner {
+    /** 
+     * @notice Privileged function in which the owner can set the state of this contract.
+     * @param _state the state the owner wants to change.
+    */
+    function setPaused(bool _state) external onlyOwner {
         paused = _state;
     }
 
-    function setPresale(bool _bool) public onlyOwner {
-        require(snapshotContract != address(0), 'Snapshot contract not set');
+    /** 
+     * @notice Privileged function in which the owner can activate the presale.
+     * @param _bool the state the owner wants to change.
+    */
+    function setPresale(bool _bool) external onlyOwner {
         require(merkleRoot != bytes32(0), 'MerkleRoot not set');
         presale = _bool;
     }
 
-    function setMerkleRoot(bytes32 _newMerkleRoot) public onlyOwner {
+    /** 
+     * @notice Privileged function in which the owner can set merkle root.
+     * @param _newMerkleRoot the merkle root for the whitelist.
+    */
+    function setMerkleRoot(bytes32 _newMerkleRoot) external onlyOwner {
         merkleRoot = _newMerkleRoot;
     }
 
-    function withdraw() public onlyOwner {
+    /** 
+     * @notice Privileged function in which the owner can withdraw the received fee.
+    */
+    function withdraw() external onlyOwner {
         require(feeReceiver != address(0), 'Fee receiver unset');
         (bool os, ) = payable(feeReceiver).call{value: address(this).balance}("");
         require(os);
     }
 
+    /** 
+     * @notice Internal function that mints an amount to a user.
+     * @param _receiver the address of the user who is to receive the nfts
+     * @param _mintAmount the number of nfts to be mint
+    */
     function _mintLoop(address _receiver, uint256 _mintAmount) internal {
         for (uint256 i = 0; i < _mintAmount; i++) {
             supply.increment();
@@ -262,19 +318,28 @@ contract RoboPunksNFT is ERC721, Ownable {
         }
     }
 
-    function setWithdrawReceiver(address _receiver) public onlyOwner {
+    /** 
+     * @notice Function that sets where the fee earned will be sent to.
+     * @param _receiver the address that will receive the fee.
+    */
+    function setWithdrawReceiver(address _receiver) external onlyOwner {
         feeReceiver = _receiver;
     }
 
-    function setSnapShotContract(address _contract) public onlyOwner {
-        snapshotContract = _contract;
-    }
-
-    function getMintedAmount(address _address) public view returns (uint256) {
+    /** 
+     * @notice Function to view the number of nfts of a user.
+     * @param _address tthe user's address.
+    */
+    function getMintedAmount(address _address) external view returns (uint256) {
         return walletMints[_address];
     }
 
-    function isWl(address _address, bytes32[] calldata _merkleProof) public view returns (bool) {
+    /** 
+     * @notice Function to check if you are on the whitelist.
+     * @param _address the user's address.
+     * @param _merkleProof the necessary proof.
+    */
+    function isWl(address _address, bytes32[] calldata _merkleProof) external view returns (bool) {
         bytes32 leaf = keccak256(bytes.concat(keccak256(abi.encode(_address))));
         if (MerkleProof.verify(_merkleProof, merkleRoot, leaf)) return true; else return false;
     }
@@ -283,22 +348,18 @@ contract RoboPunksNFT is ERC721, Ownable {
         return uri;
     }
 
-    function answerRiddle1(string memory word) public {
-        bytes32 answer = 0x600c9e601db6b78478816ba89472d10c317ad5c5de0c730d5445d564063d0928;
-        bytes32 answer2 = 0x1a2b422a98e5997505ec11e80526a028849794d1ce7b18f7b3b86467bf527132;
+    /** 
+     * @notice Riddle which allows you to win a nft.
+     * @param word the word that believes as an answer.
+    */
+    function answerRiddle1(string memory word) external {
+        bytes32 answer = 0x0b701c8a16939e2de83ebd55cb55edda407e2dac6fae7c0c627f822effef004f;
         require(!paused, 'It is too early for an answer');
         require(riddle1Winner == address(0), 'Riddle has been already answered');
-        require(sha256(abi.encodePacked(word)) == answer || sha256(abi.encodePacked(word)) == answer2, 'Wrong answer');
+        require(sha256(abi.encodePacked(word)) == answer,'Wrong answer');
         riddle1Winner = msg.sender;
-    }
-
-    function answerRiddle2(string memory word) public {
-        bytes32 answer = 0x36b9a725939ace7a71e1241a3bb02c92ddb0c27aa31d111262544d35e6979c73;
-        bytes32 answer2 = 0xac284abad8e59f9958b1bafb227bee6ab4d1233ec9c3fab565920744e6b49b2a;
-        require(!paused, 'It is too early for an answer');
-        require(riddle2Winner == address(0), 'Riddle has been already answered');
-        require(sha256(abi.encodePacked(word)) == answer || sha256(abi.encodePacked(word)) == answer2, 'Wrong answer');
-        riddle2Winner = msg.sender;
+        supply.increment();
+        _safeMint(msg.sender, supply.current());
     }
 
     receive() external payable {}
